@@ -1,0 +1,71 @@
+# Log Sources Configuration
+
+# System Logs
+system_logs:
+  - path: /var/log/syslog
+    type: system
+    description: Main system log file
+    monitoring:
+      interval: 5  # seconds
+      rotation_pattern: "/var/log/syslog.*.gz"
+      permissions: 0644
+
+  - path: /var/log/auth.log
+    type: system
+    description: Authentication and authorization logs
+    monitoring:
+      interval: 10
+      rotation_pattern: "/var/log/auth.log.*.gz"
+      permissions: 0640
+
+# Application Logs
+application_logs:
+  - path: /var/log/nginx/access.log
+    type: application
+    description: Nginx access logs
+    monitoring:
+      interval: 5
+      rotation_pattern: "/var/log/nginx/access.log.*.gz"
+      permissions: 0644
+
+  - path: /var/log/nginx/error.log
+    type: application
+    description: Nginx error logs
+    monitoring:
+      interval: 5
+      rotation_pattern: "/var/log/nginx/error.log.*.gz"
+      permissions: 0644
+
+  - path: /var/log/apache2/access.log
+    type: application
+    description: Apache access logs
+    monitoring:
+      interval: 5
+      rotation_pattern: "/var/log/apache2/access.log.*.gz"
+      permissions: 0644
+
+# Security Logs
+security_logs:
+  - path: /var/log/secure
+    type: security
+    description: Security related events
+    monitoring:
+      interval: 3
+      rotation_pattern: "/var/log/secure.*.gz"
+      permissions: 0600
+
+  - path: /var/log/audit/audit.log
+    type: security
+    description: Audit system events
+    monitoring:
+      interval: 3
+      rotation_pattern: "/var/log/audit/audit.log.*.gz"
+      permissions: 0600
+
+# Default Settings
+defaults:
+  monitoring:
+    interval: 5  # seconds
+    max_file_size: 100  # MB
+    retention_days: 30
+    buffer_size: 8192  # bytes
