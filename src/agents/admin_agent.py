@@ -24,13 +24,35 @@ class AdminAgent(BaseAgent):
         self.firefighter_id = "firefighter"
         self.police_id = "police"
         self.incident_log = []  # Store history of incidents
-        # OpenAI API settings
-        self.openai_api_key = os.environ.get(
-            "OPENAI_API_KEY",
-            "sk-wiuqpyvxnyswlwqfixmrxpdqqcuxhgvuthauqnflsssqqazl",
-        )
-        self.openai_url = "https://api.siliconflow.cn/v1/chat/completions"
-        self.model = "Qwen/Qwen2.5-14B-Instruct"  # Can be changed to newer models as needed
+
+        # Load AI configuration from system_config.json
+        try:
+            with open(
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                    "config",
+                    "system_config.json",
+                ),
+                "r",
+            ) as f:
+                config = json.load(f)
+                ai_config = config.get("ai_config", {})
+                # Get AI settings from config, with environment variable as fallback for API key
+                self.openai_api_key = os.environ.get(
+                    "OPENAI_API_KEY", ai_config.get("openai_api_key", "")
+                )
+                self.openai_url = ai_config.get(
+                    "openai_url",
+                    "https://api.siliconflow.cn/v1/chat/completions",
+                )
+                self.model = ai_config.get("model", "Qwen/Qwen2.5-14B-Instruct")
+        except Exception as e:
+            print(
+                f"AdminAgent: Error loading config: {e}. Using default values."
+            )
+            self.openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+            self.openai_url = "https://api.siliconflow.cn/v1/chat/completions"
+            self.model = "Qwen/Qwen2.5-14B-Instruct"
 
     def determine_response_agent_with_ai(self, anomaly: Dict[str, Any]) -> str:
         """Use ChatGPT to determine which response agent to dispatch based on anomaly details."""

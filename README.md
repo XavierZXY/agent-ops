@@ -61,14 +61,17 @@ The system consists of four main agent components working together:
 ```bash
 git clone https://github.com/xavierzxy/agent-ops.git
 cd agent-ops
-
+uv venv -p 3.10
+uv sync
 ```
 
-2. Configure event settings in `/config/events.yaml`
+2. Configure event settings in `./config/system_config.json`
 
 3. Set your OpenAI API key:
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
+"openai_api_key": "sk-*********",
+"openai_url": "https://api.siliconflow.cn/v1/chat/completions",
+"model": "Qwen/Qwen2.5-14B-Instruct"
 ```
 
 4. Run the demo script:
