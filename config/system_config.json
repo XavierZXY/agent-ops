@@ -9,7 +9,7 @@
     },
     "simulation_mode": true,
     "ai_config": {
-        "openai_api_key": "sk-wiuqpyvxnyswlwqfixmrxpdqqcuxhgvuthauqnflsssqqazl",
+        "openai_api_key": "",
         "openai_url": "https://api.siliconflow.cn/v1/chat/completions",
         "model": "Qwen/Qwen2.5-14B-Instruct"
     }
