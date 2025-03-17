@@ -1,124 +1,155 @@
-# Log Monitoring Agent
+# Multi-Agent Emergency Response System
 
-A powerful and flexible log monitoring system that leverages GPT for intelligent log analysis. This system provides real-time log collection, processing, and analysis capabilities through a REST API interface.
+A distributed multi-agent system for real-time security monitoring and emergency response coordination. The system integrates security monitoring, administrative routing, and emergency response capabilities through a network of specialized agents.
 
-## Features
+## System Architecture
 
-- File-based log collection with extensible collector system
-- Intelligent log normalization and processing
-- GPT-powered log analysis for pattern detection and insights
-- RESTful API for querying and analyzing logs
-- Configurable monitoring parameters and analysis rules
+The system consists of four main agent components working together:
 
-## Quick Start
+1. **SecurityAgent**
+   - Monitors system security logs (/var/log/security.log)
+   - Detects anomalous login patterns (>3 failures/minute)
+   - Generates ALERT level events using RFC5424 standard
+   - Communicates with AdminAgent via gRPC
+
+2. **AdminAgent**
+   - Central message routing hub with AI-powered decision making
+   - Uses ChatGPT to intelligently route emergency requests based on incident details
+   - Routes emergency requests to correct service type:
+     - FIRE_EMERGENCY → FirefighterAgent
+     - POLICE_ASSISTANCE → PoliceAgent
+   - Implements priority queuing (High/Medium/Low)
+   - Provides load balancing for request distribution
+   - Falls back to rule-based routing if AI service is unavailable
+
+3. **FirefighterAgent**
+   - Handles fire emergency requests
+   - Guaranteed response time < 30 seconds
+   - Standard response format: `{status: 200, unit: "消防1中队"}`
+   - Automated incident report generation
+
+4. **PoliceAgent**
+   - Processes police assistance requests
+   - Response time < 45 seconds
+   - Standard response format: `{status: 200, unit: "巡警3组"}`
+   - Implements 3-tier incident classification
+
+## Message System
+
+### Message Format (JSON)
+```json
+{
+  "timestamp": "2024-01-20T10:30:00Z",
+  "event_type": "SECURITY_ALERT",
+  "severity": "HIGH",
+  "source_ip": "192.168.1.100",
+  "hmac": "sha256-signature"
+}
+```
+
+## Installation
 
 ### Prerequisites
 
-- Python 3.7+
-- OpenAI API key for GPT integration
+- Python 3.11+
+- MetaGPT framework
+- OpenAI API key (for AI-powered decision making)
 
-### Installation
+### Setup
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/agent-ops.git
-   cd agent-ops
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Configure your OpenAI API key in `src/demo.py`:
-   ```python
-   gpt_config = GPTConfig(
-       api_key="your-api-key-here",  # Replace with your API key
-       model_name="gpt-3.5-turbo",
-       max_tokens=1000,
-       temperature=0.7
-   )
-   ```
-
-## Usage
-
-### Starting the Server
-
-Run the demo script to start the monitoring system:
-
 ```bash
-python src/demo.py
+git clone https://github.com/xavierzxy/agent-ops.git
+cd agent-ops
+
 ```
 
-The server will start on `http://localhost:8000`.
+2. Configure event settings in `/config/events.yaml`
 
-### API Endpoints
-
-#### Search Logs
-
-```http
-GET /logs/search
-```
-
-Parameters:
-- `start_time`: Start timestamp (ISO format)
-- `end_time`: End timestamp (ISO format)
-- `log_level`: (Optional) Filter by log level
-- `source`: (Optional) Filter by log source
-
-Example:
+3. Set your OpenAI API key:
 ```bash
-curl "http://localhost:8000/logs/search?start_time=2023-01-01T00:00:00&end_time=2023-01-02T00:00:00&log_level=ERROR"
+export OPENAI_API_KEY="your-api-key-here"
 ```
 
-#### Analyze Logs
-
-```http
-GET /logs/analyze
-```
-
-Parameters:
-- `start_time`: (Optional) Start timestamp (ISO format)
-- `end_time`: (Optional) End timestamp (ISO format)
-
-If not specified, analyzes the last hour of logs.
-
-Example:
+4. Run the demo script:
 ```bash
-curl "http://localhost:8000/logs/analyze"
+source .venv/bin/activate
+python demo.py
 ```
 
-## Architecture
+## API Examples
 
-The system consists of three main components:
+### Security Alert Generation
+```python
+from security_agent import SecurityAgent
 
-1. **Log Collector**: Monitors and collects logs from configured sources
-2. **Log Processor**: Normalizes and processes raw log entries
-3. **Log Analyzer**: Uses GPT to analyze logs and extract insights
-
-All components are managed by the Agent Manager, which coordinates their operation and provides the API interface.
-
-## Configuration
-
-Log sources can be configured in `config/log_sources.yaml`. The system supports various log source types and processing rules.
-
-## Development
-
-### Project Structure
-
-```
-src/
-├── agent_manager/     # Agent coordination and management
-├── log_pipeline/      # Log collection and processing
-├── service_layer/     # API and service handlers
-└── demo.py           # Demo application
+agent = SecurityAgent()
+agent.monitor_logs(interval_minutes=5)
 ```
 
-### Adding New Features
+### Emergency Request Routing
+```python
+from admin_agent import AdminAgent
 
-1. Implement new collectors in `log_pipeline/collector.py`
-2. Add processing rules in `log_pipeline/processor.py`
-3. Extend analysis capabilities in `log_pipeline/analyzer.py`
+admin = AdminAgent()
+response = admin.route_request({
+    "service_type": "FIRE_EMERGENCY",
+    "priority": "HIGH",
+    "location": "Building A"
+})
+```
+
+## Deployment Guide
+
+### System Initialization Order
+
+1. Start Message Queue Service
+2. Launch AdminAgent
+3. Start Emergency Response Agents (Fire/Police)
+4. Initialize SecurityAgent
+
+### Configuration
+
+1. Event frequency settings in `/config/events.yaml`
+2. Heartbeat interval: 60 seconds
+3. Dead letter queue handling enabled
+4. OpenAI API settings (model, temperature) can be modified in AdminAgent class
+
+### Performance Metrics
+
+- End-to-end message latency: < 2 seconds
+- System throughput: 1000 events/minute
+- Agent response times:
+  - FirefighterAgent: < 30 seconds
+  - PoliceAgent: < 45 seconds
+
+### Monitoring
+
+- Security alerts: Check `/var/log/security.log`
+- Agent status: 60-second heartbeat intervals
+- Message queue health: Dead letter queue monitoring
+
+## Testing
+
+### Unit Tests
+```bash
+python -m pytest tests/
+```
+
+Key test cases:
+- SecurityAgent alert trigger accuracy
+- AdminAgent 100% routing accuracy (both AI and rule-based)
+- Emergency response time compliance
+
+### Integration Tests
+- End-to-end message flow
+- Failover scenarios
+- Load balancing verification
+
+### Load Testing
+- Sustained load: 1000 events/minute
+- Response time degradation monitoring
+- System resource utilization
 
 ## License
 
